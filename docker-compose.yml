@@ -1,0 +1,17 @@
+version: "3"
+services:
+    app_service:
+        build: ./app_service
+        ports:
+            - "5000:5000"
+        networks:
+            - network1
+    model_service:
+        build: ./model_service
+        ports:
+            - "5001:5001"
+        networks:
+            - network1
+
+networks:
+    network1:
