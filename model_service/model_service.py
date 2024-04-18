@@ -84,7 +84,6 @@ def before_request():
 @app.after_request
 def after_request(response):
     request_latency = round(time.time() * 1000) - request.start_time
-    print(request_latency)
     REQUEST_COUNT.labels(request.method, request.path).inc()
     REQUEST_LATENCY.labels(request.method, request.path).observe(request_latency)
     return response
