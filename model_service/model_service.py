@@ -1,7 +1,10 @@
 from transformers import BartTokenizer, BartForConditionalGeneration
 from flask import Flask, request, jsonify
+from prometheus_client import Counter, Histogram
+from prometheus_client.exposition import generate_latest
 import torch
 import nltk
+import time
 
 
 class TransformerPredict:
@@ -60,6 +63,8 @@ class TransformerPredict:
 
 app = Flask(__name__)
 summarizer = TransformerPredict()
+REQUEST_COUNT = Counter('request_count', 'App Request Count', ['method', 'endpoint'])
+REQUEST_LATENCY = Histogram('request_latency_ms', 'Request latency in milliseconds', ['method', 'endpoint'])
 
 
 @app.route('/predict', methods=['POST'])
@@ -69,6 +74,25 @@ def predict():
     params = data['params']
     summary = summarizer.summarize(input_text, **params)
     return jsonify({'summary': summary})
+
+
+@app.before_request
+def before_request():
+    request.start_time = round(time.time() * 1000)
+
+
+@app.after_request
+def after_request(response):
+    request_latency = round(time.time() * 1000) - request.start_time
+    print(request_latency)
+    REQUEST_COUNT.labels(request.method, request.path).inc()
+    REQUEST_LATENCY.labels(request.method, request.path).observe(request_latency)
+    return response
+
+
+@app.route('/metrics')
+def metrics():
+    return generate_latest()
 
 
 if __name__ == '__main__':

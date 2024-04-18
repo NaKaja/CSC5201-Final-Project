@@ -1,16 +1,22 @@
 # import os
+import time
 import sqlite3
 import hashlib
 import secrets
 import requests
 # from minio import Minio
 from flask import Flask, render_template, request, redirect, url_for, session, g
+from prometheus_client import Counter, Histogram
+from prometheus_client.exposition import generate_latest
 
+# Login code based on: https://gist.github.com/jironghuang/24e0577e58844882604c0013407bf606
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 app.database = "users.db"
+REQUEST_COUNT = Counter('request_count', 'App Request Count', ['method', 'endpoint'])
+REQUEST_LATENCY = Histogram('request_latency_ms', 'Request latency in milliseconds', ['method', 'endpoint'])
 
-# TODO: Minio Service
+# TODO: Minio Service?
 """
 minio_access_key = os.getenv("MINIO_ACCESS_KEY")
 minio_secret_key = os.getenv("MINIO_SECRET_KEY")
@@ -21,8 +27,6 @@ minio_client = Minio(
     secure=False
 )
 """
-
-# Login code based on: https://gist.github.com/jironghuang/24e0577e58844882604c0013407bf606
 
 
 def init_db():
@@ -110,6 +114,7 @@ def submit():
         sample = request.form.get('sample', 'False').lower() == 'true'
 
         # 'http://127.0.0.1:5001/predict'
+        # 'http://model_service:5001/predict'
         response = requests.post('http://model_service:5001/predict', json={
             'text': input_text,
             'params': {
@@ -123,6 +128,25 @@ def submit():
         summary = '\n'.join(['>' + chunk for chunk in summary.split('\n')])
         return render_template('index.html', input_text=input_text, output_text=summary)
     return redirect(url_for('login'))
+
+
+@app.before_request
+def before_request():
+    request.start_time = round(time.time() * 1000)
+
+
+@app.after_request
+def after_request(response):
+    request_latency = round(time.time() * 1000) - request.start_time
+    print(request_latency)
+    REQUEST_COUNT.labels(request.method, request.path).inc()
+    REQUEST_LATENCY.labels(request.method, request.path).observe(request_latency)
+    return response
+
+
+@app.route('/metrics')
+def metrics():
+    return generate_latest()
 
 
 if __name__ == '__main__':

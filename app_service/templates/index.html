@@ -10,7 +10,7 @@
             padding: 0;
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            background-image: url('/static/test.jpg');
+            background-image: url('/static/bg.jpg');
         }
         .container {
             display: flex;
@@ -89,6 +89,29 @@
             margin: 20px;
             visibility: hidden;
         }
+
+        #scrollButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        @keyframes scroll {
+          from {
+            background-position: 0 0;
+          }
+          to {
+            background-position: 100% 0;
+          }
+        }
+        #scrollButton.clicked {
+          animation: scroll 400ms linear infinite;
+          background-image: linear-gradient(45deg, transparent, transparent 25%, rgba(255, 255, 255, 0.5) 25%, rgba(255, 255, 255, 0.5) 50%, transparent 50%, transparent 75%, rgba(255, 255, 255, 0.5) 75%);
+          background-size: 200% 100%;
+        }
     </style>
 </head>
 <body>
@@ -134,7 +157,7 @@
                                 <option value="True">True</option>
                             </select>
                         </div>
-                        <input type="submit" value="Submit">
+                        <input type="submit" value="Submit" id="scrollButton">
                     </div>
                 </div>
                 <hr>
@@ -146,5 +169,10 @@
             <br><a href='/logout'>Logout</a>
         </div>
     </div>
+    <script>
+	  document.getElementById('scrollButton').addEventListener('click', function() {
+	  this.classList.toggle('clicked');
+	  });
+    </script>
 </body>
 </html>
