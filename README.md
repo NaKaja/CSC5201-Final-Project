@@ -11,7 +11,7 @@ This application aims to have 4 services:
 - **MINIO Service** (not implemented): An object store service where user text files can be stored and retrieved later
 - **Prometheus Service**: A monitoring services which periodically queries all other services for endpoint metrics like count and latency
 
-![](Service Diagram.png)
+<img src='./Service Diagram.png'>
 
 ## Installation
 This application is orchestrated through docker compose so installation is very simple. On a machine with Git and Docker installed:  
